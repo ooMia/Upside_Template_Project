@@ -1,34 +1,23 @@
 {
-  "name": "upside_practice_project",
-  "version": "0.0.1",
+  "name": "@oomia/upside-template",
+  "author": "ooMia",
+  "version": "0.0.2",
   "description": "upside_practice_project",
-  "directories": {
-    "lib": "lib",
-    "test": "test",
-    "script": "script",
-    "proxy": "src/proxy"
-  },
+  "license": "UNLICENSED",
   "scripts": {
-    "install": "forge install && forge update && npm run remapping",
-    "test": "npm run format && forge test || forge coverage",
-    "format": "forge fmt",
+    "preinstall": "forge install && forge update && yarn remapping",
+    "test": "yarn format && forge test",
+    "format": "yarn compile && prettier --write . && forge fmt",
     "build": "forge build",
     "compile": "forge compile",
-    "remapping": "forge remappings > remappings.txt",
-    "deploy": "forge script script/Deploy.s.sol:Deploy",
-    "info": "cast client"
+    "remapping": "forge remappings > remappings.txt"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ooMia/Upside_Practice_Project.git"
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "prettier-plugin-solidity": "^1.4.1"
   },
-  "keywords": [
-    "upside"
-  ],
-  "author": "ooMia",
-  "license": "UNLICENSED",
-  "bugs": {
-    "url": "https://github.com/ooMia/Upside_Practice_Project/issues"
+  "engines": {
+    "node": ">=22.8.0"
   },
-  "homepage": "https://github.com/ooMia/Upside_Practice_Project#readme"
+  "packageManager": "yarn@4.4.1"
 }

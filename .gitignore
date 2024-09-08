@@ -1,6 +1,7 @@
 # Compiler files
 cache/
 out/
+lib/
 
 # Ignores development broadcast logs
 !/broadcast
@@ -15,3 +16,14 @@ docs/
 
 # vscode
 .vscode
+
+# yarn
+node_modules/
+.editorconfig
+.gitattributes
+.pnp.cjs
+package-lock.json
+yarn.lock
+.pnp.loader.mjs
+install-state.gz
+.yarn

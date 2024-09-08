@@ -1,0 +1,11 @@
+# Ignore all files by default
+*
+lib
+
+# Include specific files or directories
+!/src
+!/public
+!/foundry.toml
+!/package.json
+!/README.md
+!/remappings.txt

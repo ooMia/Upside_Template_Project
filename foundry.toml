@@ -7,6 +7,7 @@ libs = ["node_modules", "lib"]
 [rpc_endpoints]
 local = "${LOCAL_RPC_URL}"
 upside = "${UPSIDE_RPC_URL}"
+sepolia = "${SEPOLIA_RPC_URL}"
 
 # Uranium Finance
 rw1 = "https://upside-chal.chainlight.io/rw1/rpc/oomia.dev:${UPSIDE_RPC_SIGNATURE}"
@@ -33,3 +34,6 @@ rw5 = "https://upside-chal.chainlight.io/rw5/rpc/oomia.dev:${UPSIDE_RPC_SIGNATUR
 
 [fmt]
 sort_imports = true
+
+[etherscan]
+sepolia = { key = "${ETHERSCAN_API_KEY}" }

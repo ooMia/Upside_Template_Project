@@ -2,12 +2,23 @@
 pragma solidity ^0.8.10;
 
 import "./interface.sol";
+
+import "forge-std/Script.sol";
 import "forge-std/Test.sol";
 
-contract ContractTest is Test {
-    // uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+// address constant wbnb = 0x0dE8FCAE8421fc79B29adE9ffF97854a424Cad09;
+// address constant wbnb = 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c;
+// address constant tether = address(0x55d398326f99059fF775485246999027B3197955);
+// address constant busd = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
+// IUniswapV2Router constant uniswapV2Router = IUniswapV2Router(payable(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
+// IUniSwapV2 constant daiweth = IUniSwapV2(0xA478c2975Ab1Ea89e8196811F51A7B7Ade33eB11);
 
-    CheatCodes cheat = CheatCodes(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
+/// @dev
+/// forge script -f exam2 Exam2
+contract Exam2 is Script, Test {
+    uint256 immutable secret = vm.envUint("PRIVATE_KEY");
+    address immutable attacker = vm.rememberKey(secret);
+
     // CONTRACTS
     // Uniswap ETH/USDC LP (UNI-V2)
     IUniswapV2Pair usdcPair = IUniswapV2Pair(0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc);
@@ -38,10 +49,15 @@ contract ContractTest is Test {
     uint256 usdtRepayment = (usdtLoan * 100_301) / 100_000;
     uint256 usdcBal;
     uint256 usdtBal;
-    CheatCodes cheats = CheatCodes(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
 
     function setUp() public {
-        cheats.createSelectFork("upside", 11_129_473); //fork mainnet at block 11129473
+        // cheats.createSelectFork("upside", 1_111_9476); //fork mainnet at block 1_111_9476
+    }
+
+    function run() public {
+        console.log(attacker.balance);
+        console.log(address(this).balance);
+        // testExploit();
     }
 
     function testExploit() public {

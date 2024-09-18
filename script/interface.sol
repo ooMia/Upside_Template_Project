@@ -3601,7 +3601,7 @@ interface IcurveYSwap {
     function exchange_underlying(int128 i, int128 j, uint256 dx, uint256 min_dy) external;
 }
 
-interface IHarvestUsdcVault {
+interface IHarvestVault {
     function deposit(uint256 amountWei) external;
 
     function withdraw(uint256 numberOfShares) external;
@@ -3782,8 +3782,6 @@ interface IUniswapV2Router {
         address to,
         uint256 deadline
     ) external returns (uint256[] memory amounts);
-
-    receive() external payable;
 }
 
 interface ICurvePool {

